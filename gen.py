@@ -120,10 +120,18 @@ class CodeGenerator(object):
     
     def gen_load_global_var(self, type_, name):
         r = self.alloc_register()
+        
         self.write_line(f"\tmov\t{self.reg_names[r]}, _{name}")
         self.write_line(f"\tmov\t{self.reg_names[r]}, [{self.reg_names[r]}]")
         self.write_line(f"\tand\t{self.reg_names[r]}, {self.nasm_types_and_val[type_]}")
         
+        return r
+
+    def gen_load_local_var(self, type_, offset):
+        r = self.alloc_register()
+
+        self.write_line(f"\tmov\t{self.reg_names[r]}, {self.nasm_type_names[type_]} [rbp - {offset}]")
+
         return r
     
     def gen_assign_global_var(self, type_, name, r):
@@ -135,12 +143,14 @@ class CodeGenerator(object):
 
         self.free_register(r_addr)
         self.free_register(r)
-        
-    def gen_store_int_static_member(self, class_name, offset, r):
-        self.write_line(f"\tmov DWORD[{class_name}+{offset}], {r}")
     
-    def gen_store_addr_static_member(self, class_name, offset, r):
-        self.write_line(f"\tmov QWORD[{class_name}+{offset}], {r}")
+    def gen_assign_local_var(self, type_, offset, r):
+        self.write_line(f"\tmov\t{self.nasm_type_names[type_]} [rbp - {offset}], {self.reg_names[r]}")
+
+        self.free_register(r)
+        
+    def gen_align_stack(self):
+        self.write_line("\tsub\trsp, 16")
 
     def write_line(self, ln=""):
         self.file_content += ln + "\n"

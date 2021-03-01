@@ -150,7 +150,45 @@ class Parser(object):
             return expr
     
     def parse_local_symbol(self):
-        pass
+        pos_start = self.current_tok.pos_start
+
+        var_type = self.current_tok
+        if var_type.type != T_TYPE:
+            self.error = True
+            err = Error("Expected type of variable", self.current_tok.pos_start, self.current_tok.pos_end)
+            print(err.as_string())
+            return
+
+        self.advance()
+
+        ident = self.current_tok
+        if ident.type != T_IDENTIFIER:
+            self.error = True
+            err = Error("Expected identifier", self.current_tok.pos_start, self.current_tok.pos_end)
+            print(err.as_string())
+            return
+
+        self.advance()
+
+        if self.current_tok.type == T_EQUALS:
+            self.advance()
+
+            expr = self.parse_expr(20)
+            if self.check_semi():
+                return
+            
+            self.advance()
+            return LocalVarDeclarationNode(var_type, ident, expr, pos_start, self.current_tok.pos_end)
+        else:
+            if self.current_tok.type != T_SEMICOLON:
+                self.error = True
+                err = Error("Expected ';'", self.current_tok.pos_start, self.current_tok.pos_end)
+                print(err.as_string())
+                return
+
+            self.advance()
+
+            return LocalVarDeclarationNode(var_type, ident, None, pos_start, self.current_tok.pos_end)
 
     """
     Math expressions

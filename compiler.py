@@ -49,6 +49,22 @@ class Compiler(object):
 
         self.codegen.gen_decl_global_var(s.data_type, s.name)
     
+    def visit_LocalVarDeclarationNode(self, node, context):
+        s = Symbol(node.name.value, A_VARIABLE, self.get_data_type(node.type.value))
+
+        if context.add_symbol(s):
+            self.codegen.gen_align_stack()
+        
+        if node.initial:
+            r, t = self.visit(node.initial, context)
+            if not (t == s.data_type):
+                self.error = 1
+                err = Error("Types are not compatible ({} vs {})".format(v_names[s.data_type], v_names[t]), node.pos_start, node.pos_end)
+                print(err.as_string())
+                return NO_REG, D_NULL
+                
+            self.codegen.gen_assign_local_var(s.data_type, s.offset, r)
+    
     def visit_VarAssignNode(self, node, context):
         s = context.get_symbol(node.name.value.value)
         
@@ -59,12 +75,16 @@ class Compiler(object):
             return NO_REG, D_NULL
 
         r, t = self.visit(node.expr, context)
+        if not (t == s.data_type):
+            self.error = 1
+            err = Error("Types are not compatible ({} vs {})".format(v_names[s.data_type], v_names[t]), node.pos_start, node.pos_end)
+            print(err.as_string())
+            return NO_REG, D_NULL
 
         if (s.is_global):
             self.codegen.gen_assign_global_var(s.data_type, s.name, r)
         else:
-            # self.codegen.get_assign_local_var(s.data_type, s.name, r)
-            pass
+            self.codegen.get_assign_local_var(s.data_type, s.offset, r)
         
     def visit_IntLitNode(self, node, context):
         return self.codegen.load_int(node.value), D_INT
@@ -80,6 +100,7 @@ class Compiler(object):
         
         if s.is_global:
             return self.codegen.gen_load_global_var(s.data_type, s.name), s.data_type
+        return self.codegen.gen_load_local_var(s.data_type, s.offset), s.data_type
 
     def visit_UnaryOperationNode(self, node, context):
         if node.sign == T_MINUS:

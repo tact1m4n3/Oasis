@@ -45,7 +45,7 @@ class FunctionContext:
         self.symbols[s.name] = s
         self.symbols[s.name].offset = self.last_symbol_offset
 
-        if self.last_symbol_offset - self.align_count * 16 >= 16:
+        if self.last_symbol_offset - self.align_count * 16 >= 0:
             self.align_count += 1
             return True
         return False
