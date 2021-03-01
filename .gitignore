@@ -1,0 +1,4 @@
+__pycache__/
+*.os
+*.o
+*.asm
