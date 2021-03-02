@@ -226,6 +226,10 @@ class Parser(object):
             node = IntLitNode(self.current_tok.value, self.current_tok.pos_start, self.current_tok.pos_end)
             self.advance()
             return node
+        elif self.current_tok.type == T_CHARLIT:
+            node = CharLitNode(self.current_tok.value, self.current_tok.pos_start, self.current_tok.pos_end)
+            self.advance()
+            return node
         elif self.current_tok.type == T_IDENTIFIER:
             node = IdentifierNode(self.current_tok, self.current_tok.pos_start, self.current_tok.pos_end)
             self.advance()

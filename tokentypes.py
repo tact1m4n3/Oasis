@@ -1,4 +1,5 @@
 T_INTLIT = "INTLIT"
+T_CHARLIT = "CHARLIT"
 T_PLUS = "PLUS"
 T_MINUS = "MINUS"
 T_ASTERISK = "ASTERISK"
@@ -20,6 +21,7 @@ keywords = [
 
 types = [
     "int",
+    "char",
     "void"
 ]
 

@@ -58,6 +58,23 @@ class Lexer:
                 tokens.append(self.make_number())
             elif self.current_char in LETTERS + '_':
                 tokens.append(self.make_identifier())
+            elif self.current_char == '\'':
+                pos_start = self.position.copy()
+                self.advance()
+                char = self.current_char
+                self.advance()
+
+                if self.current_char != '\'':
+                    self.error = True
+                    pos_end = self.position.copy()
+                    pos_end.advance('')
+                    err = Error("You forgot an apostroph :))", self.position.copy(), pos_end)
+                    print(err.as_string())
+                else:
+                    pos_end = self.position.copy()
+                    pos_end.advance('')
+
+                    tokens.append(Token(T_CHARLIT, ord(char), pos_start, pos_end))
             elif self.current_char == '+':
                 tokens.append(Token(T_PLUS, None, self.position.copy()))
             elif self.current_char == '-':
@@ -130,7 +147,7 @@ class Lexer:
     def is_letter(c):
         if not c:
             return 0
-        if c in LETTERS:
+        if c in LETTERS + '_':
             return 1
         return 0
 

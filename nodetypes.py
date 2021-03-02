@@ -17,6 +17,16 @@ class IntLitNode(object):
         return str(self.value)
 
 
+class CharLitNode(object):
+    def __init__(self, value, pos_start, pos_end):
+        self.value = value
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return str(self.value)
+
+
 class IdentifierNode(object):
     def __init__(self, value, pos_start, pos_end):
         self.value = value

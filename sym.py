@@ -1,12 +1,9 @@
 D_NULL = 0
+D_CHAR = 1
 D_INT = 4
 
 A_VARIABLE = 0
 A_FUNCTION = 1
-
-v_sizes = {
-    D_INT: 4
-}
 
 v_names = {
     D_INT: "int"
@@ -40,7 +37,7 @@ class FunctionContext:
             self.symbols.update(self.parent.symbols)
 
     def add_symbol(self, s):
-        self.last_symbol_offset += v_sizes[s.data_type]
+        self.last_symbol_offset += s.data_type
 
         self.symbols[s.name] = s
         self.symbols[s.name].offset = self.last_symbol_offset

@@ -30,7 +30,7 @@ def main():
     
     context = GlobalContext()
 
-    compiler = Compiler(outfn)
+    compiler = Compiler(asmfn)
     compiler.visit(tree, context)
 
     if compiler.error:
@@ -38,5 +38,5 @@ def main():
     
     compiler.close_output_file()
     
-    # subprocess.Popen([f'nasm -f macho64 {asmfn}'], shell=True)
-    # subprocess.Popen([f'ld -macosx_version_min 10.13 {objfn} -o {outfn} -lSystem'], shell=True)
+    subprocess.Popen([f'nasm -f macho64 {asmfn}'], shell=True)
+    subprocess.Popen([f'ld -macosx_version_min 10.13 {objfn} -o {outfn} -lSystem'], shell=True)

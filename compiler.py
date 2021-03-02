@@ -57,7 +57,7 @@ class Compiler(object):
         
         if node.initial:
             r, t = self.visit(node.initial, context)
-            if not (t == s.data_type):
+            if not self.are_compatible(t, s.data_type):
                 self.error = 1
                 err = Error("Types are not compatible ({} vs {})".format(v_names[s.data_type], v_names[t]), node.pos_start, node.pos_end)
                 print(err.as_string())
@@ -75,7 +75,7 @@ class Compiler(object):
             return NO_REG, D_NULL
 
         r, t = self.visit(node.expr, context)
-        if not (t == s.data_type):
+        if not self.are_compatible(t, s.data_type):
             self.error = 1
             err = Error("Types are not compatible ({} vs {})".format(v_names[s.data_type], v_names[t]), node.pos_start, node.pos_end)
             print(err.as_string())
@@ -84,10 +84,13 @@ class Compiler(object):
         if (s.is_global):
             self.codegen.gen_assign_global_var(s.data_type, s.name, r)
         else:
-            self.codegen.get_assign_local_var(s.data_type, s.offset, r)
+            self.codegen.gen_assign_local_var(s.data_type, s.offset, r)
         
     def visit_IntLitNode(self, node, context):
         return self.codegen.load_int(node.value), D_INT
+    
+    def visit_CharLitNode(self, node, context):
+        return self.codegen.load_char(node.value), D_CHAR
 
     def visit_IdentifierNode(self, node, context):
         s = context.get_symbol(node.value.value)
@@ -109,12 +112,14 @@ class Compiler(object):
 
             if (t == D_INT): # or other types that support '-'
                 return self.codegen.sub_int(r1, r2), t
+            elif (t == D_CHAR):
+                return self.codegen.sub_char(r1, r2), t
 
     def visit_BinaryOperationNode(self, node, context):
         r1, t1 = self.visit(node.left_node, context)
         r2, t2 = self.visit(node.right_node, context)
 
-        if not (t1 == t2):
+        if not (self.are_compatible(t1, t2)):
             self.error = 1
             err = Error("You can't execute a binary operation between {} and {}".format(v_names[t1], v_names[t2]), node.pos_start, node.pos_end)
             print(err.as_string())
@@ -122,13 +127,22 @@ class Compiler(object):
 
         if t1 == D_INT:
             if node.sign == T_PLUS:
-                return self.codegen.add_int(r1, r2), D_INT
+                return self.codegen.add_int(r1, r2), t1
             elif node.sign == T_MINUS:
-                return self.codegen.sub_int(r1, r2), D_INT
+                return self.codegen.sub_int(r1, r2), t1
             elif node.sign == T_ASTERISK:
-                return self.codegen.mul_int(r1, r2), D_INT
+                return self.codegen.mul_int(r1, r2), t1
             elif node.sign == T_SLASH:
-                return self.codegen.div_int(r1, r2), D_INT
+                return self.codegen.div_int(r1, r2), t1
+        elif t1 == D_CHAR:
+            if node.sign == T_PLUS:
+                return self.codegen.add_char(r1, r2), t1
+            elif node.sign == T_MINUS:
+                return self.codegen.sub_char(r1, r2), t1
+            elif node.sign == T_ASTERISK:
+                return self.codegen.mul_char(r1, r2), t1
+            elif node.sign == T_SLASH:
+                return self.codegen.div_char(r1, r2), t1
         
         self.error = 1
         err = Error("Type {} does not support binary operations".format(v_names[t1]), node.pos_start, node.pos_end)
@@ -140,7 +154,8 @@ class Compiler(object):
         
         if t == D_INT:
             self.codegen.print_int(r1)
-        
+        elif t == D_CHAR:
+            self.codegen.print_char(r1)
         return NO_REG, None
 
     @staticmethod
@@ -155,8 +170,19 @@ class Compiler(object):
     def get_data_type(self, n):
         if n == 'int':
             return D_INT
+        elif n == 'char':
+            return D_CHAR
         else:
             return -1
+    
+    @staticmethod
+    def are_compatible(t1, t2):
+        if t1 == t2:
+            return True
+        elif t1 in (D_INT, D_CHAR) and t2 in (D_INT, D_CHAR):
+            return True
+        
+        return False
 
     def no_visit_method(self, node, context):
         raise Exception("No visit method defined for {}".format(type(node).__name__))
