@@ -4,9 +4,10 @@ from error import Error
 
 PREC_EOF = 0
 PREC_ASSIGN = 10
-PREC_UNARY = 20
-PREC_PLUSMINUS = 30
-PREC_MULDIV = 40
+PREC_COMPARISON = 20
+PREC_UNARY = 30
+PREC_PLUSMINUS = 40
+PREC_MULDIV = 50
 
 
 class Parser(object):
@@ -74,10 +75,10 @@ class Parser(object):
 
         self.advance()
 
-        if self.current_tok.type == T_LEFTPAREN:
+        if self.current_tok.type == T_LPAREN:
             args = ()
             self.advance()
-            if self.current_tok.type != T_RIGHTPAREN:
+            if self.current_tok.type != T_RPAREN:
                 self.error = True
                 err = Error("Expected ')'", self.current_tok.pos_start, self.current_tok.pos_end)
                 print(err.as_string())
@@ -85,7 +86,7 @@ class Parser(object):
 
             self.advance()
 
-            if self.current_tok.type != T_LEFTCURLY:
+            if self.current_tok.type != T_LCURLY:
                 if self.current_tok.type != T_SEMICOLON:
                     self.error = True
                     err = Error("Expected ';'", self.current_tok.pos_start, self.current_tok.pos_end)
@@ -117,7 +118,7 @@ class Parser(object):
     def parse_function_stmts(self):
         stmts = FunctionStatements()
 
-        while self.current_tok.type is not T_RIGHTCURLY and not self.error:
+        while self.current_tok.type is not T_RCURLY and not self.error:
             if self.check_eof():
                 return
             stmt = self.parse_function_stmt()
@@ -170,7 +171,7 @@ class Parser(object):
 
         self.advance()
 
-        if self.current_tok.type == T_EQUALS:
+        if self.current_tok.type == T_EQ:
             self.advance()
 
             expr = self.parse_expr(20)
@@ -197,14 +198,14 @@ class Parser(object):
         left = self.parse_primary()
 
         tokentype = self.current_tok.type
-        if tokentype == T_SEMICOLON or tokentype == T_RIGHTPAREN or tokentype == T_EOF:
+        if tokentype == T_SEMICOLON or tokentype == T_RPAREN or tokentype == T_EOF:
             return left
 
         while self.get_precedence(tokentype) >= prec:
             self.advance()
             right = self.parse_expr(self.get_precedence(tokentype))
 
-            if tokentype == T_EQUALS:
+            if tokentype == T_EQ:
                 if type(left) == IdentifierNode:
                     left = VarAssignNode(left, right, left.pos_start, right.pos_end)
                 else:
@@ -216,7 +217,7 @@ class Parser(object):
                 left = BinaryOperationNode(left, tokentype, right, left.pos_start, right.pos_end)
 
             tokentype = self.current_tok.type
-            if tokentype == T_SEMICOLON or tokentype == T_RIGHTPAREN or tokentype == T_EOF:
+            if tokentype == T_SEMICOLON or tokentype == T_RPAREN or tokentype == T_EOF:
                 return left
 
         return left
@@ -242,10 +243,10 @@ class Parser(object):
             val = self.parse_primary()
             node = UnaryOperationNode(sign, val, pos_start, self.current_tok.pos_end)
             return node
-        elif self.current_tok.type == T_LEFTPAREN:
+        elif self.current_tok.type == T_LPAREN:
             self.advance()
             expr = self.parse_expr(0)
-            if self.current_tok.type != T_RIGHTPAREN:
+            if self.current_tok.type != T_RPAREN:
                 self.error = True
                 err = Error("Expected ')'", self.current_tok.pos_start, self.current_tok.pos_end)
                 print(err.as_string())
@@ -265,8 +266,20 @@ class Parser(object):
     def get_precedence(self, tokentype):
         if tokentype == T_EOF:
             return PREC_EOF
-        elif tokentype == T_EQUALS:
+        elif tokentype == T_EQ:
             return PREC_ASSIGN
+        elif tokentype == T_DEQ:
+            return PREC_COMPARISON
+        elif tokentype == T_NEQ:
+            return PREC_COMPARISON
+        elif tokentype == T_LT:
+            return PREC_COMPARISON
+        elif tokentype == T_LTE:
+            return PREC_COMPARISON
+        elif tokentype == T_GT:
+            return PREC_COMPARISON
+        elif tokentype == T_GTE:
+            return PREC_COMPARISON
         elif tokentype == T_INTLIT:
             return PREC_UNARY
         elif tokentype == T_PLUS:

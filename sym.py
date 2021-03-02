@@ -6,6 +6,7 @@ A_VARIABLE = 0
 A_FUNCTION = 1
 
 v_names = {
+    D_CHAR: "char",
     D_INT: "int"
 }
 

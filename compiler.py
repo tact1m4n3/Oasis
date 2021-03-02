@@ -134,6 +134,8 @@ class Compiler(object):
                 return self.codegen.mul_int(r1, r2), t1
             elif node.sign == T_SLASH:
                 return self.codegen.div_int(r1, r2), t1
+            elif node.sign in (T_DEQ, T_NEQ, T_LT, T_LTE, T_GT, T_GTE):
+                return self.codegen.cmp_int(r1, r2, node.sign), t1
         elif t1 == D_CHAR:
             if node.sign == T_PLUS:
                 return self.codegen.add_char(r1, r2), t1
@@ -143,6 +145,8 @@ class Compiler(object):
                 return self.codegen.mul_char(r1, r2), t1
             elif node.sign == T_SLASH:
                 return self.codegen.div_char(r1, r2), t1
+            elif node.sign in (T_DEQ, T_NEQ, T_LT, T_LTE, T_GT, T_GTE):
+                return self.codegen.cmp_char(r1, r2, node.sign), t1
         
         self.error = 1
         err = Error("Type {} does not support binary operations".format(v_names[t1]), node.pos_start, node.pos_end)

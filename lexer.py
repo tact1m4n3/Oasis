@@ -59,22 +59,7 @@ class Lexer:
             elif self.current_char in LETTERS + '_':
                 tokens.append(self.make_identifier())
             elif self.current_char == '\'':
-                pos_start = self.position.copy()
-                self.advance()
-                char = self.current_char
-                self.advance()
-
-                if self.current_char != '\'':
-                    self.error = True
-                    pos_end = self.position.copy()
-                    pos_end.advance('')
-                    err = Error("You forgot an apostroph :))", self.position.copy(), pos_end)
-                    print(err.as_string())
-                else:
-                    pos_end = self.position.copy()
-                    pos_end.advance('')
-
-                    tokens.append(Token(T_CHARLIT, ord(char), pos_start, pos_end))
+                tokens.append(self.make_char())
             elif self.current_char == '+':
                 tokens.append(Token(T_PLUS, None, self.position.copy()))
             elif self.current_char == '-':
@@ -84,23 +69,25 @@ class Lexer:
             elif self.current_char == '/':
                 tokens.append(Token(T_SLASH, None, self.position.copy()))
             elif self.current_char == '(':
-                tokens.append(Token(T_LEFTPAREN, None, self.position.copy()))
+                tokens.append(Token(T_LPAREN, None, self.position.copy()))
             elif self.current_char == ')':
-                tokens.append(Token(T_RIGHTPAREN, None, self.position.copy()))
+                tokens.append(Token(T_RPAREN, None, self.position.copy()))
             elif self.current_char == '{':
-                tokens.append(Token(T_LEFTCURLY, None, self.position.copy()))
+                tokens.append(Token(T_LCURLY, None, self.position.copy()))
             elif self.current_char == '}':
-                tokens.append(Token(T_RIGHTCURLY, None, self.position.copy()))
+                tokens.append(Token(T_RCURLY, None, self.position.copy()))
             elif self.current_char == '=':
-                tokens.append(Token(T_EQUALS, None, self.position.copy()))
+                tokens.append(self.make_eq())
+            elif self.current_char == '!':
+                tokens.append(self.make_neq())
+            elif self.current_char == '<':
+                tokens.append(self.make_lt())
+            elif self.current_char == '>':
+                tokens.append(self.make_gt())
             elif self.current_char == ';':
                 tokens.append(Token(T_SEMICOLON, None, self.position.copy()))
             else:
-                self.error = True
-                pos_end = self.position.copy()
-                pos_end.advance('')
-                err = Error("Invalid character", self.position.copy(), pos_end)
-                print(err.as_string())
+                self.show_error("You forgot an apostroph :))")
             
             self.advance()
 
@@ -134,6 +121,72 @@ class Lexer:
             return Token(T_TYPE, ident, pos_start, self.position.copy())
         else:
             return Token(T_IDENTIFIER, ident, pos_start, self.position.copy())
+    
+    def make_char(self):
+        pos_start = self.position.copy()
+        self.advance()
+        char = self.current_char
+        self.advance()
+
+        if self.current_char != '\'':
+            self.show_error("You forgot an apostroph :))")
+        else:
+            pos_end = self.position.copy()
+            pos_end.advance('')
+
+            return Token(T_CHARLIT, ord(char), pos_start, pos_end)
+
+    def make_eq(self):
+        pos_start = self.position.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            pos_end = self.position.copy()
+            pos_end.advance('')
+
+            return Token(T_DEQ, None, pos_start, pos_end)
+        return Token(T_EQ, None, pos_start)
+    
+    def make_neq(self):
+        pos_start = self.position.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            pos_end = self.position.copy()
+            pos_end.advance('')
+
+            return Token(T_NEQ, None, pos_start, pos_end)
+        
+        self.show_error("Unexpected character")
+    
+    def make_lt(self):
+        pos_start = self.position.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            pos_end = self.position.copy()
+            pos_end.advance('')
+
+            return Token(T_LTE, None, pos_start, pos_end)
+        return Token(T_LT, None, pos_start)
+    
+    def make_gt(self):
+        pos_start = self.position.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            pos_end = self.position.copy()
+            pos_end.advance('')
+
+            return Token(T_GTE, None, pos_start, pos_end)
+        return Token(T_GT, None, pos_start)
+
+    def show_error(self, msg):
+        self.error = True
+        pos_end = self.position.copy()
+        pos_end.advance('')
+        err = Error(msg, self.position.copy(), pos_end)
+        print(err.as_string())
 
     @staticmethod
     def is_number(num):

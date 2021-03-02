@@ -1,4 +1,5 @@
 from sym import D_CHAR, D_NULL, D_INT
+from tokentypes import *
 
 NO_REG = -1
 
@@ -7,10 +8,6 @@ class CodeGenerator(object):
     reg_names = ["r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"]
     breg_names = ["br8", "br9", "br10", "br11", "br12", "br13", "br14", "br15"]
     dreg_names = ["r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"]
-    nasm_types_and_val = {
-        D_CHAR: "0xFF",
-        D_INT: "0xFFFFFFFF"
-    }
 
     nasm_type_names = {
         D_INT: "dword",
@@ -126,6 +123,31 @@ class CodeGenerator(object):
 
         return r1
     
+    nasm_set_instructions = {
+        T_DEQ: "sete",
+        T_NEQ: "setne",
+        T_LT: "setl",
+        T_LTE: "setle",
+        T_GT: "setg",
+        T_GTE: "setge"
+    }
+
+    def cmp_int(self, r1, r2, op):
+        self.write_line("\tcmp\t{}, {}".format(self.get_reg(self.reg_names[r1], D_INT), self.get_reg(self.reg_names[r2], D_INT)))
+        self.write_line("\t{}\t{}".format(self.nasm_set_instructions[op], self.get_reg(self.reg_names[r1], D_CHAR)))
+
+        self.free_register(r2)
+        
+        return r1
+    
+    def cmp_char(self, r1, r2, op):
+        self.write_line("\tcmp\t{}, {}".format(self.get_reg(self.reg_names[r1], D_CHAR), self.get_reg(self.reg_names[r2], D_CHAR)))
+        self.write_line("\t{}\t{}".format(self.nasm_set_instructions[op], self.get_reg(self.reg_names[r1], D_CHAR)))
+
+        self.free_register(r2)
+        
+        return r1
+
     def add_char(self, r1, r2):
         self.write_line("\tadd\t{}, {}".format(self.get_reg(self.reg_names[r1], D_CHAR), self.get_reg(self.reg_names[r2], D_CHAR)))
 
