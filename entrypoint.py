@@ -38,5 +38,5 @@ def main():
     
     compiler.close_output_file()
     
-    subprocess.Popen([f'nasm -f macho64 {asmfn}'], shell=True)
-    subprocess.Popen([f'ld -macosx_version_min 10.13 {objfn} -o {outfn} -lSystem'], shell=True)
+    subprocess.Popen([f'nasm -f macho64 {asmfn}'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.Popen([f'ld -macosx_version_min 10.13 {objfn} -o {outfn} -lSystem'], shell=True, stderr=subprocess.PIPE)

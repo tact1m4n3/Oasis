@@ -161,6 +161,29 @@ class Compiler(object):
         elif t == D_CHAR:
             self.codegen.print_char(r1)
         return NO_REG, None
+    
+    def visit_IfNode(self, node, context):
+        else_label_name = self.codegen.gen_next_label()
+        
+        if node.else_stmts:
+            end_label_name = self.codegen.gen_next_label()
+        else:
+            end_label_name = else_label_name
+
+        r, t = self.visit(node.expr, context)
+
+        self.codegen.gen_jmp_if_false(r, t, else_label_name)
+
+        self.visit(node.if_stmts, context)
+
+        self.codegen.gen_jmp_to_label(end_label_name)
+
+        self.codegen.gen_label(else_label_name)
+
+        if node.else_stmts:
+            self.visit(node.else_stmts, context)
+
+            self.codegen.gen_label(end_label_name)
 
     @staticmethod
     def get_data_type_by_node(node):

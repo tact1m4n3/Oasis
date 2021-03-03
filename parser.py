@@ -142,10 +142,18 @@ class Parser(object):
         elif self.current_tok.type == T_TYPE:
             node = self.parse_local_symbol()
             return node
+        elif self.current_tok.match(T_KEYWORD, "if"):
+            node = self.parse_if_expr()
+            return node
         else:
+            if self.current_tok.type == T_SEMICOLON: # empty statement
+                self.advance()
+                return
+
             expr = self.parse_expr(0)
             if self.check_semi():
                 return
+            
             self.advance()
 
             return expr
@@ -190,6 +198,49 @@ class Parser(object):
             self.advance()
 
             return LocalVarDeclarationNode(var_type, ident, None, pos_start, self.current_tok.pos_end)
+    
+    def parse_if_expr(self):
+        pos_start = self.current_tok.pos_start
+
+        self.advance()
+
+        # condition
+        if self.current_tok.type != T_LPAREN:
+            self.error = True
+            err = Error("Expected '('", self.current_tok.pos_start, self.current_tok.pos_end)
+            print(err.as_string())
+            return
+
+        self.advance()
+
+        expr = self.parse_expr(0)
+        
+        if self.current_tok.type != T_RPAREN:
+            self.error = True
+            err = Error("Expected ')'", self.current_tok.pos_start, self.current_tok.pos_end)
+            print(err.as_string())
+            return
+        self.advance()
+
+        # if statements
+        if self.current_tok.type == T_LCURLY:
+            self.advance()
+            if_stmts = self.parse_function_stmts()
+        else:
+            if_stmts = self.parse_function_stmt()
+        
+        if not self.current_tok.match(T_KEYWORD, "else"):
+            return IfNode(expr, if_stmts, None, pos_start, self.current_tok.pos_end)
+
+        # else statements
+        self.advance()
+        if self.current_tok.type == T_LCURLY:
+            self.advance()
+            else_stmts = self.parse_function_stmts()
+        else:
+            else_stmts = self.parse_function_stmt()
+        
+        return IfNode(expr, if_stmts, else_stmts, pos_start, self.current_tok.pos_end)
 
     """
     Math expressions

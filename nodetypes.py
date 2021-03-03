@@ -108,6 +108,18 @@ class VarAssignNode(object):
     def __repr__(self):
         return f"{self.name} = {self.expr}"
 
+class IfNode(object):
+    def __init__(self, expr, if_stmts, else_stmts, pos_start, pos_end):
+        self.expr = expr
+        self.if_stmts = if_stmts
+        self.else_stmts = else_stmts
+
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+    
+    def __repr__(self):
+        return f"(IF ({self.expr}) {self.if_stmts} ELSE {self.else_stmts})"
+
 class FunctionDeclarationNode(object):
     def __init__(self, type_, name, args, stmts, pos_start, pos_end):
         self.type = type_

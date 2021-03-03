@@ -19,12 +19,18 @@ class CodeGenerator(object):
         self.file_content = ""
         self.bss_section = "section .bss\n"
 
+        self.last_label_num = 0
+
     def close_file(self):
         with open(self.fn, "w+") as f:
             f.write(self.file_content + '\n' + self.bss_section)
 
     def free_register(self, reg):
         self.reg_status[reg] = 0
+    
+    def gen_next_label(self):
+        self.last_label_num += 1
+        return ".L" + str(self.last_label_num)
 
     def alloc_register(self):
         reg = NO_REG
@@ -132,6 +138,15 @@ class CodeGenerator(object):
         T_GTE: "setge"
     }
 
+    nasm_jmp_instructions_if = {
+        T_DEQ: "jne",
+        T_NEQ: "je",
+        T_LT: "jge",
+        T_LTE: "jg",
+        T_GT: "jle",
+        T_GTE: "jl"
+    }
+
     def cmp_int(self, r1, r2, op):
         self.write_line("\tcmp\t{}, {}".format(self.get_reg(self.reg_names[r1], D_INT), self.get_reg(self.reg_names[r2], D_INT)))
         self.write_line("\t{}\t{}".format(self.nasm_set_instructions[op], self.get_reg(self.reg_names[r1], D_CHAR)))
@@ -147,6 +162,12 @@ class CodeGenerator(object):
         self.free_register(r2)
         
         return r1
+    
+    def gen_jmp_if_false(self, r, t, label):
+        self.write_line("\tcmp\t{}, {}".format(self.get_reg(self.reg_names[r], t), 0))
+        self.write_line("\tje\t{}".format(label))
+
+        self.free_register(r)
 
     def add_char(self, r1, r2):
         self.write_line("\tadd\t{}, {}".format(self.get_reg(self.reg_names[r1], D_CHAR), self.get_reg(self.reg_names[r2], D_CHAR)))
@@ -236,6 +257,12 @@ class CodeGenerator(object):
         
     def gen_align_stack(self):
         self.write_line("\tsub\trsp, 16")
+
+    def gen_label(self, name):
+        self.write_line(name + ":")
+    
+    def gen_jmp_to_label(self, name):
+        self.write_line("\tjmp\t{}".format(name))
 
     def write_line(self, ln=""):
         self.file_content += ln + "\n"

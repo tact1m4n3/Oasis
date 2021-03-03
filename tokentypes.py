@@ -23,6 +23,8 @@ T_TYPE = "TYPE"
 
 keywords = [
     "print",
+    "if",
+    "else"
 ]
 
 types = [
